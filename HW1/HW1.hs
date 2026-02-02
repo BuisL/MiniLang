@@ -11,45 +11,57 @@ import Data.Maybe
 -- * Question 1: map, filter, zip
 
 myMap :: (a -> b) -> [a] -> [b]
-myMap f []     = undefined
-myMap f (x:xs) = undefined
+myMap f []     = []
+myMap f (x:xs) = f x : myMap f xs
 
 myOtherMap :: (a -> b) -> [a] -> [b]
-myOtherMap f xs = [ undefined | undefined ]
+myOtherMap f xs = [ f x | x <- xs ]
 
 myFilter :: (a -> Bool) -> [a] -> [a]
-myFilter _ []     = undefined
-myFilter p (x:xs) = undefined
+myFilter _ []     = []
+myFilter p (x:xs) 
+  | p x = x : myFilter p xs 
+  | otherwise = myFilter p xs
 
 myOtherFilter :: (a -> Bool) -> [a] -> [a]
-myOtherFilter p xs = [ undefined | undefined ]
+myOtherFilter p xs = [ x | x <- xs, p x]
 
-myZip :: a -- Change this!
-myZip = undefined
+myZip :: [a] -> [b] -> [(a,b)]
+myZip [] _ = []
+myZip _ [] = []
+myZip (x:xs) (y:ys) = (x,y) : myZip xs ys
 
 mystery :: (b -> c) -> (a, b) -> (a, c)
-mystery = undefined
+mystery f (x, y) = (x, (f y)) 
 
 -- * Question 2: Primes
 
 divides :: Integer -> Integer -> Bool
-divides n m = undefined
+divides n m = mod n m == 0
 
 isPrime :: Integer -> Bool
-isPrime n = undefined
+isPrime n
+  | n <= 1 = False
+  | otherwise = all (\x -> not $ divides n x) [2 .. n-1]
+--  | otherwise = foldr (\x acc -> acc && not (divides n x)) True [2 .. n-1]
 
 -- * Question 3: Luhn Algorithm
 
 luhn :: Integer -> Bool
-luhn = undefined
+luhn n = last (digits n) == mod (10 - (mod (snd s) 10)) 10 
+  where s = foldl (\(e, acc) x -> if not e then (not e, acc + x) else if x * 2 > 9 then (not e, x * 2 - 9 + acc) else (not e, x * 2 + acc)) (False, 0) (init $ digits n)
 
 digits :: Integer -> [Integer]
 digits n = map (\x -> read [x]) (show n)
 
 isAmericanExpress, isMaster, isVisa :: Integer -> Bool
-isAmericanExpress = undefined
-isMaster = undefined
-isVisa = undefined
+isAmericanExpress n = (s == 34 || s == 37) && length (show n) == 15 && luhn n
+  where s = read (take 2 (show n))  
+isMaster n = (elem s1 [2221..2720] || elem s2 [51..55]) && length (show n) == 16 && luhn n
+  where s1 = read (take 4 (show n))
+        s2 = read (take 2 (show n))
+isVisa n = (read (take 2 (show n )) == 34) && (l == 13 || l == 16 || l ==19) && luhn n
+  where l = length (show n)
 
 -- * Question 4: Show and Eq
 
