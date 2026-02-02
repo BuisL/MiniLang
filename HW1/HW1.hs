@@ -11,7 +11,7 @@ import Data.Maybe
 -- * Question 1: map, filter, zip
 
 myMap :: (a -> b) -> [a] -> [b]
-myMap f []     = []
+myMap _ []     = []
 myMap f (x:xs) = f x : myMap f xs
 
 myOtherMap :: (a -> b) -> [a] -> [b]
@@ -37,30 +37,30 @@ mystery f (x, y) = (x, (f y))
 -- * Question 2: Primes
 
 divides :: Integer -> Integer -> Bool
-divides n m = mod n m == 0
+divides n m = mod m n == 0
 
 isPrime :: Integer -> Bool
 isPrime n
   | n <= 1 = False
-  | otherwise = all (\x -> not $ divides n x) [2 .. n-1]
+  | otherwise = all (\x -> not $ divides x n) [2 .. n-1]
 --  | otherwise = foldr (\x acc -> acc && not (divides n x)) True [2 .. n-1]
 
 -- * Question 3: Luhn Algorithm
 
 luhn :: Integer -> Bool
 luhn n = last (digits n) == mod (10 - (mod (snd s) 10)) 10 
-  where s = foldl (\(e, acc) x -> if not e then (not e, acc + x) else if x * 2 > 9 then (not e, x * 2 - 9 + acc) else (not e, x * 2 + acc)) (False, 0) (init $ digits n)
+  where s = foldr (\x (e, acc) -> if not e then (not e, acc + x) else if x * 2 > 9 then (not e, x * 2 - 9 + acc) else (not e, x * 2 + acc)) (True, 0) (init $ digits n)
 
 digits :: Integer -> [Integer]
 digits n = map (\x -> read [x]) (show n)
 
 isAmericanExpress, isMaster, isVisa :: Integer -> Bool
 isAmericanExpress n = (s == 34 || s == 37) && length (show n) == 15 && luhn n
-  where s = read (take 2 (show n))  
+  where s = (read (take 2 (show n))) :: Integer  
 isMaster n = (elem s1 [2221..2720] || elem s2 [51..55]) && length (show n) == 16 && luhn n
-  where s1 = read (take 4 (show n))
-        s2 = read (take 2 (show n))
-isVisa n = (read (take 2 (show n )) == 34) && (l == 13 || l == 16 || l ==19) && luhn n
+  where s1 = read (take 4 (show n)) :: Integer  
+        s2 = read (take 2 (show n)) :: Integer  
+isVisa n = (head (show n ) == '4') && (l == 13 || l == 16 || l == 19) && luhn n
   where l = length (show n)
 
 -- * Question 4: Show and Eq
@@ -68,10 +68,12 @@ isVisa n = (read (take 2 (show n )) == 34) && (l == 13 || l == 16 || l ==19) && 
 newtype UnOrdPair a = UOP (a,a)
 
 instance (Show a, Ord a) => Show (UnOrdPair a) where
-  show (UOP (x,y)) = undefined
+  show (UOP (x,y))
+    | x > y = "UOP (" ++ show y ++ "," ++ show x ++ ")"
+    | otherwise = "UOP (" ++ show x ++ "," ++ show y ++ ")"
 
 instance Ord a => Eq (UnOrdPair a) where
-  (==) (UOP (x1,y1)) (UOP (x2,y2)) = undefined
+  (==) (UOP (x1,y1)) (UOP (x2,y2)) = (x1 == x2 && y1 == y2) || (x1 == y2 && x2 == y1)
 
 -- * Question 5: Propositional Logic
 
