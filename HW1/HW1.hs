@@ -49,7 +49,13 @@ isPrime n
 
 luhn :: Integer -> Bool
 luhn n = last (digits n) == mod (10 - (mod (snd s) 10)) 10 
-  where s = foldr (\x (e, acc) -> if not e then (not e, acc + x) else if x * 2 > 9 then (not e, x * 2 - 9 + acc) else (not e, x * 2 + acc)) (True, 0) (init $ digits n)
+  where s = foldr doubleLuhn (True, 0) (init $ digits n)
+
+doubleLuhn :: Integer -> (Bool, Integer) -> (Bool, Integer)
+doubleLuhn x (pos, acc)
+  | not pos   = (not pos, acc + x) 
+  | x * 2 > 9 = (not pos, x * 2 - 9 + acc) 
+  | otherwise = (not pos, x * 2 + acc)
 
 digits :: Integer -> [Integer]
 digits n = map (\x -> read [x]) (show n)
@@ -77,27 +83,39 @@ instance Ord a => Eq (UnOrdPair a) where
 
 -- * Question 5: Propositional Logic
 
-data Form = P Integer | Neg Form | Conj Form Form
+data Form = P Integer | Neg Form | Conj Form Form | Imp Form Form | LTrue
   deriving (Eq,Ord,Show)
 
-type Assignment = Integer -> Bool
+type Assignment = [Integer]
+
+disj :: Form -> Form -> Form
+disj f g = Neg ( Conj (Neg (f)) (Neg g))
 
 satisfies :: Assignment -> Form -> Bool
-satisfies v (P k)      = v k
+satisfies v (P k)      = elem k v
 satisfies v (Neg f)    = not (satisfies v f)
-satisfies v (Conj f g) = satisfies v f && satisfies v g
+satisfies v (Conj f g) = (satisfies v f) && (satisfies v g)
+satisfies v (Imp f g) = not (satisfies v f) || (satisfies v g)
+satisfies v LTrue = True
+
 
 con :: [Form] -> Form
-con = undefined
+con [] = LTrue
+con l = foldl (\acc x -> Conj x acc) LTrue l 
 
 dis :: [Form] -> Form
-dis = undefined
+dis [] = LTrue
+dis l = foldl (\acc x -> disj x acc) LTrue l 
 
 variablesIn :: Form -> [Integer]
-variablesIn = undefined
+variablesIn (P k) = [k] 
+variablesIn (Neg f) = variablesIn f  
+variablesIn (Conj f g) = variablesIn f ++ variablesIn g
+variablesIn (Imp f g) = variablesIn f ++ variablesIn g
+variablesIn (LTrue) = []
 
 allAssignmentsFor :: [Integer] -> [Assignment]
-allAssignmentsFor = undefined
+allAssignmentsFor l = subsequences l
 
 isValid :: Form -> Bool
 isValid f = undefined
