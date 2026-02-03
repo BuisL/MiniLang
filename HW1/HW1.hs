@@ -83,7 +83,7 @@ instance Ord a => Eq (UnOrdPair a) where
 
 -- * Question 5: Propositional Logic
 
-data Form = P Integer | Neg Form | Conj Form Form | Imp Form Form | LTrue
+data Form = P Integer | Neg Form | Conj Form Form | Imp Form Form | Top
   deriving (Eq,Ord,Show)
 
 type Assignment = [Integer]
@@ -96,48 +96,83 @@ satisfies v (P k)      = elem k v
 satisfies v (Neg f)    = not (satisfies v f)
 satisfies v (Conj f g) = (satisfies v f) && (satisfies v g)
 satisfies v (Imp f g) = not (satisfies v f) || (satisfies v g)
-satisfies v LTrue = True
+satisfies v Top = True
 
 
 con :: [Form] -> Form
-con [] = LTrue
-con l = foldl (\acc x -> Conj x acc) LTrue l 
+con [] = Top
+con l = foldl (\acc x -> Conj x acc) Top l 
 
 dis :: [Form] -> Form
-dis [] = LTrue
-dis l = foldl (\acc x -> disj x acc) LTrue l 
+dis [] = Neg Top
+dis l = foldl (\acc x -> disj x acc) (Neg Top) l 
 
 variablesIn :: Form -> [Integer]
 variablesIn (P k) = [k] 
 variablesIn (Neg f) = variablesIn f  
-variablesIn (Conj f g) = variablesIn f ++ variablesIn g
-variablesIn (Imp f g) = variablesIn f ++ variablesIn g
-variablesIn (LTrue) = []
+variablesIn (Conj f g) = nub $ variablesIn f ++ variablesIn g
+variablesIn (Imp f g) = nub $ variablesIn f ++ variablesIn g
+variablesIn (Top) = []
 
 allAssignmentsFor :: [Integer] -> [Assignment]
 allAssignmentsFor l = subsequences l
 
 isValid :: Form -> Bool
-isValid f = undefined
+isValid f = all (\x -> satisfies x f)  (allAssignmentsFor $ variablesIn f)
 
 sat :: Form -> Maybe Assignment
-sat f = undefined
+sat f = find (\x -> satisfies x f) (allAssignmentsFor $ variablesIn f)
+
+validateSat :: Maybe Assignment -> Bool
+validateSat (Just x) = True
+validateSat Nothing = False
 
 tests :: [Bool]
 tests = [ not . isValid $ P 1
         ,       isValid $ Neg (Conj (P 1) (Neg (P 1)))
-        -- add your tests here
+        , not . validateSat . sat $ P 1
+        ,       validateSat . sat $ Neg (Conj (P 1) (Neg (P 1)))   
+        , not . isValid $  Neg (Conj (Neg (Conj (P 1) (Neg (P 1))) ) (Neg (P 1))) 
+        ,       isValid $ Imp (Conj (P 1) (Neg (P 1))) (P 2)
+        , not . validateSat . sat $ Neg (Conj (Neg (Conj (P 1) (Neg (P 1))) ) (Neg (P 1))) 
+        ,       validateSat . sat $ Imp (disj (P 1) (Neg (P 1))) (P 2)   
+        , not . isValid $ Neg (Conj (P 1) (Neg (Imp (disj (P 1) (Neg (P 1))) (P 2))))
+        ,       validateSat . sat $ Neg (Conj (P 1) (Neg (Imp (disj (P 1) (Neg (P 1))) (P 2))))
         ]
 
 tooTricky :: Form
-tooTricky = undefined
+tooTricky = con [(P 1), tooTricky]
 
 type AssignmentF = Integer -> Bool
 
 allAssignmentsForF :: [Integer] -> [AssignmentF]
-allAssignmentsForF = undefined
+allAssignmentsForF l = map (\list n -> elem n list) (subsequences l)
+
+
+-- Answer
+-- While it was easier to define allAssignmentsFor for the first option, the second option becomes more intuitive when actually used.
+-- This is because in the first option I used the predefined function 'elem', which by itself is not very descriptive of the task, compared to AssignmentF 
+--  where we can immediately apply our value without any steps inbetween.
+-- This direct application improves maintainability and is arguably more elegant, since it is more modular.
+-- Of course, because AssignmentF exposes less of the underlying logic it becomes trickier to debug.
+-- To improve this system one could use a Set for the first definition instead of a list, as it can decide membership more efficiently.
+
 
 -- * Question 6: Farmer Franz
 
-solution :: (Integer, Integer, Integer) -- apples, potatoes, eggs
-solution = undefined
+solution :: (Integer , Integer , Integer) -- apples , potatoes , eggs
+solution = fromJust $ find constraints (concat $ concat $ map (\x -> map (\y -> map (\z -> (x,y,z)) [1..44]) [1..26]) [1..18])
+
+constraints :: (Integer, Integer, Integer) -> Bool
+constraints (a,b,c) = a * 17 + 12 * b + 9 * c == 305 && a + b == 3 * c
+
+-- Answer
+-- Before this brute force implemention I considered solving this as an ILP or by viewing it as a matrix 
+--  or some combination of solving on paper and calculating the rest in haskell.
+-- However, after checking I found that there are only be less than 21,000 'viable' combinations the three values could take.
+-- This is due to the total constraint of 305, which means there can only be a MAX of 44 apples or 26 potatos or 18 eggs.
+--  44 * 26 * 18 = 20592  
+-- Since this is not difficult to compute I chose to simply put all of the combinations into a list 
+--  and use find supplied with the constraints to identify the correct combination.
+-- In other words, I limited the search space and figured out the correct constraints, 
+--  and let haskell create and check all of the combinations in the search space.
