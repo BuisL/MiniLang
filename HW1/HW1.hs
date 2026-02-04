@@ -32,7 +32,7 @@ myZip _ [] = []
 myZip (x:xs) (y:ys) = (x,y) : myZip xs ys
 
 mystery :: (b -> c) -> (a, b) -> (a, c)
-mystery f (x, y) = (x, (f y)) 
+mystery f (x, y) = (x, f y) 
 
 -- * Question 2: Primes
 
@@ -48,7 +48,7 @@ isPrime n
 -- * Question 3: Luhn Algorithm
 
 luhn :: Integer -> Bool
-luhn n = last (digits n) == mod (10 - (mod (snd s) 10)) 10 
+luhn n = last (digits n) == mod (10 - mod (snd s) 10) 10 
   where s = foldr doubleLuhn (True, 0) (init $ digits n)
 
 doubleLuhn :: Integer -> (Bool, Integer) -> (Bool, Integer)
@@ -62,7 +62,7 @@ digits n = map (\x -> read [x]) (show n)
 
 isAmericanExpress, isMaster, isVisa :: Integer -> Bool
 isAmericanExpress n = (s == 34 || s == 37) && length (show n) == 15 && luhn n
-  where s = (read (take 2 (show n))) :: Integer  
+  where s = read (take 2 (show n)) :: Integer  
 isMaster n = (elem s1 [2221..2720] || elem s2 [51..55]) && length (show n) == 16 && luhn n
   where s1 = read (take 4 (show n)) :: Integer  
         s2 = read (take 2 (show n)) :: Integer  
@@ -89,64 +89,64 @@ data Form = P Integer | Neg Form | Conj Form Form | Imp Form Form | Top
 type Assignment = [Integer]
 
 disj :: Form -> Form -> Form
-disj f g = Neg ( Conj (Neg (f)) (Neg g))
+disj f g = Neg ( Conj (Neg f) (Neg g))
 
 satisfies :: Assignment -> Form -> Bool
-satisfies v (P k)      = elem k v
+satisfies v (P k)      = k `elem` v
 satisfies v (Neg f)    = not (satisfies v f)
-satisfies v (Conj f g) = (satisfies v f) && (satisfies v g)
-satisfies v (Imp f g) = not (satisfies v f) || (satisfies v g)
-satisfies v Top = True
+satisfies v (Conj f g) = satisfies v f && satisfies v g
+satisfies v (Imp f g) = not (satisfies v f) || satisfies v g
+satisfies _ Top = True
 
 
 con :: [Form] -> Form
 con [] = Top
-con l = foldl (\acc x -> Conj x acc) Top l 
+con l = foldr Conj Top l 
 
 dis :: [Form] -> Form
 dis [] = Neg Top
-dis l = foldl (\acc x -> disj x acc) (Neg Top) l 
+dis l = foldl disj (Neg Top) l 
 
 variablesIn :: Form -> [Integer]
 variablesIn (P k) = [k] 
 variablesIn (Neg f) = variablesIn f  
 variablesIn (Conj f g) = nub $ variablesIn f ++ variablesIn g
 variablesIn (Imp f g) = nub $ variablesIn f ++ variablesIn g
-variablesIn (Top) = []
+variablesIn Top = []
 
 allAssignmentsFor :: [Integer] -> [Assignment]
-allAssignmentsFor l = subsequences l
+allAssignmentsFor = subsequences
 
 isValid :: Form -> Bool
-isValid f = all (\x -> satisfies x f)  (allAssignmentsFor $ variablesIn f)
+isValid f = all (`satisfies` f)  (allAssignmentsFor $ variablesIn f)
 
 sat :: Form -> Maybe Assignment
-sat f = find (\x -> satisfies x f) (allAssignmentsFor $ variablesIn f)
+sat f = find (`satisfies` f) (allAssignmentsFor $ variablesIn f)
 
 validateSat :: Maybe Assignment -> Bool
-validateSat (Just x) = True
+validateSat (Just _) = True
 validateSat Nothing = False
 
 tests :: [Bool]
 tests = [ not . isValid $ P 1
         ,       isValid $ Neg (Conj (P 1) (Neg (P 1)))
-        , not . validateSat . sat $ P 1
+        , not . validateSat . sat $ Conj (P 1) (Neg (P 1))
         ,       validateSat . sat $ Neg (Conj (P 1) (Neg (P 1)))   
         , not . isValid $  Neg (Conj (Neg (Conj (P 1) (Neg (P 1))) ) (Neg (P 1))) 
         ,       isValid $ Imp (Conj (P 1) (Neg (P 1))) (P 2)
-        , not . validateSat . sat $ Neg (Conj (Neg (Conj (P 1) (Neg (P 1))) ) (Neg (P 1))) 
+        ,       validateSat . sat $ Conj (P 1) (Neg (Conj (Neg (Conj (P 1) (Neg (P 1))) ) (Neg (P 1)))) 
         ,       validateSat . sat $ Imp (disj (P 1) (Neg (P 1))) (P 2)   
         , not . isValid $ Neg (Conj (P 1) (Neg (Imp (disj (P 1) (Neg (P 1))) (P 2))))
         ,       validateSat . sat $ Neg (Conj (P 1) (Neg (Imp (disj (P 1) (Neg (P 1))) (P 2))))
         ]
 
 tooTricky :: Form
-tooTricky = con [(P 1), tooTricky]
+tooTricky = con [P 1, tooTricky]
 
 type AssignmentF = Integer -> Bool
 
 allAssignmentsForF :: [Integer] -> [AssignmentF]
-allAssignmentsForF l = map (\list n -> elem n list) (subsequences l)
+allAssignmentsForF l = map (flip elem) (subsequences l)
 
 
 -- Answer
@@ -161,7 +161,7 @@ allAssignmentsForF l = map (\list n -> elem n list) (subsequences l)
 -- * Question 6: Farmer Franz
 
 solution :: (Integer , Integer , Integer) -- apples , potatoes , eggs
-solution = fromJust $ find constraints (concat $ concat $ map (\x -> map (\y -> map (\z -> (x,y,z)) [1..44]) [1..26]) [1..18])
+solution = fromJust $ find constraints (concat $ concatMap (\x -> map (\y -> map ((,,) x y) [1..44]) [1..26]) [1..18])
 
 constraints :: (Integer, Integer, Integer) -> Bool
 constraints (a,b,c) = a * 17 + 12 * b + 9 * c == 305 && a + b == 3 * c
@@ -172,7 +172,7 @@ constraints (a,b,c) = a * 17 + 12 * b + 9 * c == 305 && a + b == 3 * c
 -- However, after checking I found that there are only be less than 21,000 'viable' combinations the three values could take.
 -- This is due to the total constraint of 305, which means there can only be a MAX of 44 apples or 26 potatos or 18 eggs.
 --  44 * 26 * 18 = 20592  
--- Since this is not difficult to compute I chose to simply put all of the combinations into a list 
---  and use find supplied with the constraints to identify the correct combination.
+-- Since this is not expensive to compute I chose to simply put all of the combinations into a list 
+--  and use 'find' supplied with the constraints to identify the correct combination.
 -- In other words, I limited the search space and figured out the correct constraints, 
 --  and let haskell create and check all of the combinations in the search space.
