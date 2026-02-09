@@ -13,30 +13,64 @@ import Test.QuickCheck
 
 {-
 Can foldl or foldr work on infinite lists?
-...
+
+To understand which of the two functions can terminate on infinite lists recall the definition of both. (simplified)
+  foldr f z (x:xs) = f x (foldr f z xs)
+  foldl f z (x:xs) = foldl f (f z x) xs
+
+The crucial part is to notice that while both functions examine the list from left to right,
+  they differ in the order in which they are evaluated to accomodate the desired direction.
+foldl starts with the accumulator and thus needs to pass the result of the immediate first computation "forward"
+  to the next foldl call as an argument. 
+This means that any intermediate result will always remain an argument of an foldl call, 
+  hence any result will only be available after the last foldl call will be evaluated.
+Since this will only be the case once the entire list is consumed it would take infinitely long,
+  and thus foldl cannot be evaluted on any infinite list regardless of the rest of its parameters.
+
+foldr on the other hand, is of the structure f x (foldr f z xs)
+Haskell uses normal-order (outermost, leftmost) reduction and lazy evaluation,
+  which means in this case it will first apply x to f, then apply (foldr f z xs) to f,
+  and only then will it start evaluating if necessary.
+This is important, since if f is lazy in its second argument or the second argument is not used,
+  it can start evaluating the first argument and delay or even ignore the evaluation of the second argument.
+If f is strict in its evaluation, then in order to evaluate anything it would first evaluate both x and the next fold,
+  which of course is not possible and thus would run forever.
+
+In the provided example the evaluation would look like this:
+  foldr (\x y -> x) 0 [1..]
+= (\x y -> x) 1 (foldr (\x y -> x) 0 [2..])
+= (y -> 1) (foldr (\x y -> x) 0 [2..])
+= 1
+
 
 An example query and output:
-GHCi> ...
-...
+GHCi> foldr (\x y -> x) 0 [1..]
+1
+
+Sources: https://stackoverflow.com/questions/7396978/left-and-right-folding-over-an-infinite-list
+         https://chatgpt.com/share/698a4471-dd24-800a-ac65-3ae0c9e9c445 there are some irrelevant questions in there please ignore
+
 -}
 
 -- * Question 2: Free Theorems
 
 -- Law:  (ff . map fun) xs == (map fun . ff) xs
 ff :: [a] -> [a]
-ff = undefined
+ff _ = []
 
--- Law: ???
+-- Law: fg (x,y) == fst (x,y)
 fg :: (a,b) -> a
-fg = undefined
+fg (x, y) = x
 
--- Law: ???
+-- Law: fh (Left x) == (Right x) && fh (Right x) == (Left x)
 fh :: Either a b -> Either b a
-fh = undefined
+fh (Left x) = (Right x)
+fh (Right x) = (Left x)
 
--- Law: ???
+-- Law: fh l == Nothing ==> length l == 0 
 fi :: [a] -> Maybe a
-fi = undefined
+fi [] = Nothing
+fi (x:xs) = Just x
 
 -- * Question 3: Pretty Trees
 
@@ -50,12 +84,24 @@ exampleTree = T 23 [ T 11 [ T 4 []
                           , T 8 [T 3 [], T 3 [], T 2[]]] ]
 
 ppT :: Show a => Tree a -> String
-ppT = undefined
+ppT t = concat (ppTT t)
+
+ppTT :: Show a => Tree a -> [String]
+ppTT (T v []) = [show v ++ "\n"]
+ppTT (T v tree)  = [show v ++ "\n"] ++ (concatMap (\subTree -> (map (\c -> "x" ++ c) (ppTT subTree))) tree)
 
 -- * Question 4: Arbitrary Trees
 
 instance Arbitrary a => Arbitrary (Tree a) where
-  arbitrary = undefined
+  arbitrary = sized randomTree where
+    randomTree :: Arbitrary a => Int -> Gen (Tree a)
+    randomTree 0 = do
+      value <- arbitrary 
+      return $ T value []
+    randomTree n = do
+      value <- arbitrary
+      subTree <- listOf (randomTree (div n 3))
+      return $ T value (take 3 subTree) 
 
 -- * Question 5: Modal Logic
 
