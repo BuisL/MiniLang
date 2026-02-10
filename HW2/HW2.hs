@@ -58,10 +58,12 @@ Sources: https://stackoverflow.com/questions/7396978/left-and-right-folding-over
 ff :: [a] -> [a]
 ff _ = []
 
+--apply f on b first
 -- Law: fg (x,y) == fst (x,y)
 fg :: (a,b) -> a
 fg (x, y) = x
 
+--fh . fh == id
 -- Law: fh (Left x) == (Right x) && fh (Right x) == (Left x)
 fh :: Either a b -> Either b a
 fh (Left x) = (Right x)
