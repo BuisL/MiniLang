@@ -58,18 +58,17 @@ Sources: https://stackoverflow.com/questions/7396978/left-and-right-folding-over
 ff :: [a] -> [a]
 ff _ = []
 
---apply f on b first
--- Law: fg (x,y) == fst (x,y)
+--modb :: b -> b
+-- Law: fg (x, modb y) == fg (x,y)
 fg :: (a,b) -> a
 fg (x, y) = x
 
---fh . fh == id
--- Law: fh (Left x) == (Right x) && fh (Right x) == (Left x)
+-- Law: fh . fh x == id x
 fh :: Either a b -> Either b a
 fh (Left x) = (Right x)
 fh (Right x) = (Left x)
 
--- Law: fh l == Nothing ==> length l == 0 
+-- Law: fmap f (fi l) = fi (map f l)
 fi :: [a] -> Maybe a
 fi [] = Nothing
 fi (x:xs) = Just x
@@ -145,15 +144,20 @@ makesTrue (KrM _ v _, w) (P k)     = k `elem` v w
 makesTrue (m,w)          (Not f)   = not (makesTrue (m,w) f)
 makesTrue (m,w)          (Con f g) = makesTrue (m,w) f && makesTrue (m,w) g
 makesTrue (KrM u v r, w) (Box f)   = all (\w' -> makesTrue (KrM u v r,w') f) (r ! w)
+makesTrue (m, w)         (Dia f)   = makesTrue (m, w) $ Not $ Box $ Not f
 
 tex :: ModForm -> String
-tex = undefined
+tex (P k)     = "p_{" ++ show k ++ "}"
+tex (Not f)   = "\\lnot (" ++ tex f ++ ")"
+tex (Con f g) = "(" ++ tex f ++ " \\land " ++ tex g ++ ")"
+tex (Box f)   = "\\Box " ++ tex f
+tex (Dia f)   = "\\Diamond " ++ tex f
 
 trueEverywhere :: KripkeModel -> ModForm -> Bool
-trueEverywhere = undefined
+trueEverywhere (KrM u v r) f = all (\w -> makesTrue ((KrM u v r),w) f) u 
 
 instance Eq KripkeModel where
-  (==) = undefined
+  (==) (KrM u1 v1 r1) (KrM u2 v2 r2) = sort u1 == sort u2 && sort (map v1 u1) == sort (map v2 u2) && sort r1 == sort r2
 
 type Bisimulation = [(World,World)]
 
@@ -178,19 +182,38 @@ example3 = KrMS5 [0,1,2] myVal [[0],[1,2]] where
   myVal _ = []
 
 makesTrueS5 :: (KripkeModelS5, World) -> ModForm -> Bool
-makesTrueS5 = undefined
+makesTrueS5 (KrMS5 _ v _, w) (P k)     = k `elem` v w
+makesTrueS5 (m,w)          (Not f)   = not (makesTrueS5 (m,w) f)
+makesTrueS5 (m,w)          (Con f g) = makesTrueS5 (m,w) f && makesTrueS5 (m,w) g
+makesTrueS5 (KrMS5 u v r, w) (Box f)   = all (\w' -> makesTrueS5 (KrMS5 u v r,w') f) (r !? w)                                         
+makesTrueS5 (m, w)         (Dia f)   = makesTrueS5 (m, w) $ Not $ Box $ Not f
+
+
+(!?) :: EquiRel -> World -> [World]
+(!?) r w = fromJust $ find (\l -> elem w l) r
+
 
 class Semantics a where
   (|=) :: (a, World) -> ModForm -> Bool
 
 instance Semantics KripkeModel where
-  (|=) = undefined
+  (|=) = makesTrue
 
 instance Semantics KripkeModelS5 where
-  (|=) = undefined
+  (|=) = makesTrueS5
 
 instance Arbitrary ModForm where
-  arbitrary = undefined
+  arbitrary = sized randomModForm where
+    randomModForm :: Int -> Gen ModForm
+    randomModForm 0 = P <$> elements [1..5]
+    randomModForm n = oneof [ P <$> elements [1..5]
+                          , Not <$> randomModForm (n `div` 2)
+                          , Con <$> randomModForm (n `div` 2)
+                          <*> randomModForm (n `div` 2)
+                          , Box <$> randomModForm (n `div` 2)
+                          , Dia <$> randomModForm (n `div` 2)]
+
+
 
 -- Please ensure that all generated models have a world 0.
 
