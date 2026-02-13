@@ -89,7 +89,7 @@ ppT t = concat (ppTT t)
 
 ppTT :: Show a => Tree a -> [String]
 ppTT (T v []) = [show v ++ "\n"]
-ppTT (T v tree)  = (show v ++ "\n") : concatMap (map ("." ++) . ppTT) tree
+ppTT (T v tree)  = (show v ++ "\n") : concatMap (map (". " ++) . ppTT) tree
 
 -- * Question 4: Arbitrary Trees
 
@@ -165,7 +165,16 @@ exampleBisim :: Bisimulation
 exampleBisim = [(0,0), (1,1), (2,1)]
 
 checkBisim :: KripkeModel -> KripkeModel -> Bisimulation -> Bool
-checkBisim = undefined
+checkBisim m1 m2 z = all (\p -> atom m1 m2 p && forth m1 m2 z p && forth m2 m1 (map swap z) (swap p)) z 
+
+swap :: (a,b) -> (b,a)
+swap (x,y) = (y,x)
+
+atom :: KripkeModel -> KripkeModel -> (World,World) -> Bool
+atom (KrM _ v1 _) (KrM _ v2 _) (w,w') = sort (v1 w) == sort (v2 w') 
+
+forth :: KripkeModel -> KripkeModel -> Bisimulation -> (World,World) -> Bool
+forth (KrM _ _ r1) (KrM _ _ r2) z (w,w') = all (\v -> any (\v' -> (v,v') `elem` z) (r2 ! w')) (r1 ! w)
 
 type EquiRel = [[World]]
 
