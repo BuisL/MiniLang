@@ -1,0 +1,29 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.37.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           fp
+version:        1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      HW3
+  other-modules:
+      Paths_fp
+  hs-source-dirs:
+      ./
+  ghc-options: -Wall
+  build-depends:
+      QuickCheck
+    , base
+    , containers
+    , directory
+    , lens
+    , mtl
+    , parsec
+    , random
+    , template-haskell
+  default-language: Haskell2010

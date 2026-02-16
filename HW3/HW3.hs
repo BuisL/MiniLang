@@ -76,9 +76,9 @@ treeEqUpto k (T x xts) (T y yts) = x == y && and (take k $ zipWith (treeEqUpto (
 
 phi :: forall f a b . Applicative f => (f a, f b) -> f (a , b)
 phi = up . right . down where
-  down = undefined
-  right = undefined
-  up = undefined
+  down = (\(x,y) -> ((,) <$> x,y))
+  right = (\(x,y) -> x <*> y)
+  up = id
 
 -- * Question 3: Parsing Logical Formulas
 
