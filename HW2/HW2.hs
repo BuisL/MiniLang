@@ -232,7 +232,7 @@ instance Arbitrary KripkeModel where
     randomkM n = do
       universe <- (0 : ) <$> sublistOf [1.. fromIntegral n]
       valuationList <- mapM (\w -> (,) w <$> sublistOf [1.. 2]) universe
-      relation <- sublistOf ((,) <$> universe <*> universe) --check
+      relation <- sublistOf ((,) <$> universe <*> universe)
       return $ KrM universe (valuation valuationList) relation
 
 valuation :: [(World, [Proposition])] -> World -> [Proposition]
@@ -267,7 +267,7 @@ KrM [0,1,4,6] (fromJust . flip lookup [(0,[1]),(1,[1]),(4,[1]),(6,[1,2])]) [(0,0
 (ii) a formula that is globally true in example1 but not globally true in example2:
 
 quickCheck $ \f -> not (trueEverywhere example1 f) || (trueEverywhere example2 f)
-Trick question?
+Trick question
 
 (iii) a formula that is true at 1 in example1 but not true at 1 in example3:
 
