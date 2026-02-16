@@ -10,11 +10,11 @@ data Tree a = T a [Tree a]
   deriving (Eq,Ord,Show)
 
 instance Functor Tree where
-  fmap = undefined
+  fmap f (T x l) = T (f x) (map (fmap f) l)
 
 instance Applicative Tree where
-  pure  = undefined -- Hint: return an infinite tree here (which is okay because of laziness)
-  (<*>) = undefined -- Hint: use zipWith here
+  pure x = T x (repeat $ pure x) -- Hint: return an infinite tree here (which is okay because of laziness)
+  (<*>) (T f lhs) (T x rhs) = T (f x) (zipWith (<*>) lhs rhs)  -- Hint: use zipWith here
 
 {-
 
@@ -86,15 +86,19 @@ data Form = P Integer | Neg Form | Dia Form | Conj Form Form | Imp Form Form
   deriving (Eq,Show)
 
 pForm :: Parsec String () Form
-pForm = pConj where
+pForm = pImp where
+  --an implication is a pair of atoms connected by "->":
+  pImp = chainl1 pConj (string "->" >> return Imp)
   -- a conjunction is a sequence of atoms connected by '&':
   pConj = chainl1 pAtom (char '&' >> return Conj)
   -- an atom is a variable or a negation or a conjunction in parentheses:
-  pAtom = pVar <|> pNeg <|> (char '(' *> pConj <* char ')')
+  pAtom = pVar <|> pNeg <|> pDia <|> (char '(' *> pConj <* char ')')
   -- a variable is 'p' followed by some digits:
   pVar = char 'p' >> P . read <$> many1 digit
   -- a negation is '!' followed by an atom:
   pNeg = char '!' >> Neg <$> pAtom
+  -- a diamond is "<> followed by an atom:
+  pDia = string "<>" >> Dia <$> pAtom
 
 parseForm :: String -> Either ParseError Form
 parseForm = parse pForm "input"
@@ -106,6 +110,16 @@ dialogue = do
   putStrLn "Hello! Who are you?"
   name <- getLine
   putStrLn $ "Nice to meet you, " ++ name ++ "!"
+  putStrLn $ "How old are you?"
+  inputAge <- getLine
+  let checkedAge = readMaybe inputAge :: Maybe Int
+  putStrLn $ calcAge checkedAge 
+
+
+calcAge :: Maybe Int -> String
+calcAge (Just age) = "Ah, so you were born in " ++ show (2026 - age - 1) ++ " or " ++ show (2026 - age) 
+calcAge Nothing = "Sorry, that is not a number."
+
 
 -- * Question 5: StateIO
 

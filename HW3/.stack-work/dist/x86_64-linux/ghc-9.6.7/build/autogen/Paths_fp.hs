@@ -46,12 +46,12 @@ getBinDir, getLibDir, getDynLibDir, getDataDir, getLibexecDir, getSysconfDir :: 
 
 
 bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath
-bindir     = "/home/luisbittau/VU/FP/assignments/fp-private/HW3/.stack-work/install/x86_64-linux/d31b0a5d5debf12bb649055f6edc546f0e3c4e6b3bf4275c1ff8baf472a0dff2/9.6.7/bin"
-libdir     = "/home/luisbittau/VU/FP/assignments/fp-private/HW3/.stack-work/install/x86_64-linux/d31b0a5d5debf12bb649055f6edc546f0e3c4e6b3bf4275c1ff8baf472a0dff2/9.6.7/lib/x86_64-linux-ghc-9.6.7/fp-1.0.0-AV2wvIXaOHFJYKhdnafL7U"
-dynlibdir  = "/home/luisbittau/VU/FP/assignments/fp-private/HW3/.stack-work/install/x86_64-linux/d31b0a5d5debf12bb649055f6edc546f0e3c4e6b3bf4275c1ff8baf472a0dff2/9.6.7/lib/x86_64-linux-ghc-9.6.7"
-datadir    = "/home/luisbittau/VU/FP/assignments/fp-private/HW3/.stack-work/install/x86_64-linux/d31b0a5d5debf12bb649055f6edc546f0e3c4e6b3bf4275c1ff8baf472a0dff2/9.6.7/share/x86_64-linux-ghc-9.6.7/fp-1.0.0"
-libexecdir = "/home/luisbittau/VU/FP/assignments/fp-private/HW3/.stack-work/install/x86_64-linux/d31b0a5d5debf12bb649055f6edc546f0e3c4e6b3bf4275c1ff8baf472a0dff2/9.6.7/libexec/x86_64-linux-ghc-9.6.7/fp-1.0.0"
-sysconfdir = "/home/luisbittau/VU/FP/assignments/fp-private/HW3/.stack-work/install/x86_64-linux/d31b0a5d5debf12bb649055f6edc546f0e3c4e6b3bf4275c1ff8baf472a0dff2/9.6.7/etc"
+bindir     = "/home/luisbittau/VU/Courses/FP/Assignments/fp-private/HW3/.stack-work/install/x86_64-linux/d31b0a5d5debf12bb649055f6edc546f0e3c4e6b3bf4275c1ff8baf472a0dff2/9.6.7/bin"
+libdir     = "/home/luisbittau/VU/Courses/FP/Assignments/fp-private/HW3/.stack-work/install/x86_64-linux/d31b0a5d5debf12bb649055f6edc546f0e3c4e6b3bf4275c1ff8baf472a0dff2/9.6.7/lib/x86_64-linux-ghc-9.6.7/fp-1.0.0-AV2wvIXaOHFJYKhdnafL7U"
+dynlibdir  = "/home/luisbittau/VU/Courses/FP/Assignments/fp-private/HW3/.stack-work/install/x86_64-linux/d31b0a5d5debf12bb649055f6edc546f0e3c4e6b3bf4275c1ff8baf472a0dff2/9.6.7/lib/x86_64-linux-ghc-9.6.7"
+datadir    = "/home/luisbittau/VU/Courses/FP/Assignments/fp-private/HW3/.stack-work/install/x86_64-linux/d31b0a5d5debf12bb649055f6edc546f0e3c4e6b3bf4275c1ff8baf472a0dff2/9.6.7/share/x86_64-linux-ghc-9.6.7/fp-1.0.0"
+libexecdir = "/home/luisbittau/VU/Courses/FP/Assignments/fp-private/HW3/.stack-work/install/x86_64-linux/d31b0a5d5debf12bb649055f6edc546f0e3c4e6b3bf4275c1ff8baf472a0dff2/9.6.7/libexec/x86_64-linux-ghc-9.6.7/fp-1.0.0"
+sysconfdir = "/home/luisbittau/VU/Courses/FP/Assignments/fp-private/HW3/.stack-work/install/x86_64-linux/d31b0a5d5debf12bb649055f6edc546f0e3c4e6b3bf4275c1ff8baf472a0dff2/9.6.7/etc"
 
 getBinDir     = catchIO (getEnv "fp_bindir")     (\_ -> return bindir)
 getLibDir     = catchIO (getEnv "fp_libdir")     (\_ -> return libdir)
