@@ -1,0 +1,10 @@
+name = "TreeFunctor"
+version = "0.1.0"
+defaultTargets = ["treefunctor"]
+
+[[lean_lib]]
+name = "TreeFunctor"
+
+[[lean_exe]]
+name = "treefunctor"
+root = "Main"
