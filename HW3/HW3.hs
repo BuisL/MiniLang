@@ -3,6 +3,7 @@ module HW3 where
 
 import Text.Read (readMaybe)
 import Text.Parsec
+import Data.Text
 
 -- * Question 1: Applicative Trees
 
@@ -92,7 +93,7 @@ pForm = pImp where
   -- a conjunction is a sequence of atoms connected by '&':
   pConj = chainl1 pAtom (char '&' >> return Conj)
   -- an atom is a variable or a negation or a conjunction in parentheses:
-  pAtom = pVar <|> pNeg <|> pDia <|> (char '(' *> pConj <* char ')')
+  pAtom = pVar <|> pNeg <|> pDia <|> (char '(' *> pConj <* char ')') 
   -- a variable is 'p' followed by some digits:
   pVar = char 'p' >> P . read <$> many1 digit
   -- a negation is '!' followed by an atom:
@@ -101,7 +102,11 @@ pForm = pImp where
   pDia = string "<>" >> Dia <$> pAtom
 
 parseForm :: String -> Either ParseError Form
-parseForm = parse pForm "input"
+parseForm form = (parse pForm "input") (strip form)
+
+removeSpaces :: String -> String
+removeSpaces = undefined
+
 
 -- * Question 4: Hello World 3.0
 
