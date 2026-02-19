@@ -132,45 +132,42 @@ calcAge Nothing = "Sorry, that is not a number."
 newtype StateIO  s a = SIO {runSIO :: s -> IO (a, s)}  -- for parts (a) to (c)
 newtype StateT m s a = ST  {run    :: s -> m  (a, s)}  -- for part (d)
 
-instance Functor (StateT m a) where       -- Please DELETE all
-  fmap  = undefined                       -- these placeholder
-instance Applicative (StateT m a) where   -- lines when you
-  pure  = undefined                       -- start answering
-  (<*>) = undefined                       -- this question.
-instance Monad (StateT m a) where         --
-  (>>=) = undefined                       -- Thank you!
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
-put :: s -> StateIO s ()
-put s' = SIO $ \_s -> return ((), s')
+put :: Monad m => s -> StateT m s ()
+put s' = ST $ \_s -> return ((), s')
 
-get :: StateIO s s
-get = undefined
+get :: Monad m => StateT m s s
+get = ST $ \s -> return (s,s)
 
-lift :: IO a -> StateIO s a
-lift ia = SIO $ \s -> do
+lift :: Monad m => m a -> StateT m s a
+lift ia = ST $ \s -> do
   a <- ia
   return (a, s)
 
-instance Functor (StateIO s) where
-  fmap ab (SIO sa) = SIO $ \s -> do
+instance Monad m => Functor (StateT m s) where
+  fmap ab (ST sa) = ST $ \s -> do
     (a, s') <- sa s
     let b = ab a
     return (b, s')
 
-instance Applicative (StateIO s) where
-  pure a = SIO $ \s -> return (a, s)
-  (SIO sab) <*> (SIO sa) = SIO $ \s -> do
+instance Monad m => Applicative (StateT m s) where
+  pure a = ST $ \s -> return (a, s)
+  (ST sab) <*> (ST sa) = ST $ \s -> do
     (ab, s' ) <- sab s
     (a , s'') <- sa  s'
     let b = ab a
     return (b, s'')
 
-instance Monad (StateIO s) where
-  (>>=) = undefined
+instance Monad m => Monad (StateT m s) where
+  (>>=) (ST sa) fasb = ST $ \s -> do
+    (a, s') <- sa s
+    let ST sb = fasb a
+    (b, s'') <- sb s'
+    return (b,s'')
 
 -- monad m=IO, state type s=Int, value type a=()
-askCount :: StateIO Int ()
+askCount :: StateT IO Int ()
 askCount = do
   lift $ putStrLn "What is your name?"
   n <- lift getLine
@@ -181,9 +178,6 @@ askCount = do
   lift $ putStrLn $ "I have seen " ++ show k' ++ " vowels so far."
   askCount
 
-safeLogDivide :: String -- remove this line after you are done with (d) --
-safeLogDivide = undefined -- remove this line after you are done with (d) --
-{- -- remove this line after you are done with (d) --
 -- monad m=Maybe, state type s=[String], value type a=Int
 safeLogDivide :: Int -> Int -> StateT Maybe [String] Int
 safeLogDivide _ 0 = lift Nothing
@@ -191,4 +185,3 @@ safeLogDivide x y = do
   oldLog <- get
   put $ oldLog ++ ["Divided by " ++ show y]
   return (x `div` y)
--} -- remove this line after you are done with (d) --
