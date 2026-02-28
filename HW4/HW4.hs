@@ -35,7 +35,7 @@ lensToLensR ln = L { viewR = view ln
                    , modifyR = modify ln }
 
 lensRtoLens :: LensR s a -> Lens' s a
-lensRtoLens lnr = undefined
+lensRtoLens lnr = \f s -> fmap (\a -> setR lnr a s) (f (viewR lnr s))
 
 -- * Question 2: Manual Raise
 
@@ -53,11 +53,13 @@ fred = P "Fred" 100
 {-
   modify lsalary (+40) (P "Fred" 100)
 ==                                                   {def of modify}
-  ???
-==
-  .
-  .
-  .
+  runIdentity $ lsalary (Id . (+40)) (P "Fred" 100)
+==                                                   {def of lsalary}
+  runIdentity $ fmap (P "Fred") ((Id . (+40)) 100)
+==                                                   {def of (+) and (.) and Id}
+  runIdentity $ fmap (P "Fred") (Id (140))
+==                                                   {def of fmap}
+  runIdentity $ Id (P "Fred" 140)
 ==                                                   {def of runIdentity}
   P "Fred" 140
 -}
