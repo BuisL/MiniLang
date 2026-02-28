@@ -1,0 +1,16 @@
+name: fp
+version: 1.0.0
+ghc-options: -Wall
+library:
+  source-dirs:
+    - .
+dependencies:
+  - QuickCheck
+  - base
+  - containers
+  - directory
+  - lens
+  - mtl
+  - parsec
+  - random
+  - template-haskell
