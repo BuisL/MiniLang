@@ -77,9 +77,10 @@ class Convertable a b where
   convert :: a -> b
 
 instance Convertable (ListPos a) (Zipper a) where
-  convert = undefined
+  convert (LP xs n) = Zip (take n xs) (xs !! n) (drop (n+1) xs) 
 instance Convertable (Zipper a) (ListPos a) where
-  convert = undefined
+  convert (Zip xs n ys) = LP (xs ++ [n] ++ ys) (length xs) 
+
 
 -- * Question 4: Tree Zip
 
@@ -109,23 +110,33 @@ class TreeLike t where
 
 instance TreeLike TreePos where
   single x = TP (Node x []) []
-  getItem = undefined -- Change this!
+  getItem (TP (Node x xs) []) = x
+  getItem (TP (Node x ls) (y:ys)) = getItem (TP (ls !! y) ys) 
   moveToChild k (TP t ks) = TP t (ks ++ [k])
   moveUp (TP _ []) = error "Cannot move above root!"
   moveUp (TP t ks) = TP t (init ks)
-  insertChild = undefined -- Change this!
-  remove = undefined -- Change this!
+  insertChild x (TP (Node n ts) []) = TP (Node n (ts ++ [(Node x [])])) [length ts]
+  insertChild x (TP (Node n ts) (l:ls)) = merge (TP (Node n ts) (l:ls)) (insertChild x (TP (ts !! l) ls))
+  remove (TP t []) = error "Cannot move above root!"
+  remove (TP (Node n ts) [l]) = TP (Node n ((take l ts) ++ (drop (l+1) ts))) []
+  remove (TP (Node n ts) (l:ls)) =  merge (TP (Node n ts) (l:ls)) (remove (TP (ts !! l) ls))
 
-data Path a = Step a -- Change this!
+merge :: TreePos a -> TreePos a -> TreePos a
+merge (TP (Node x ts) (l:ls)) (TP t ys) = TP (Node x ((take l ts)++[t]++(drop (l+1) ts))) (l:ys)
+
+
+data Path a = Step a [Tree a] [Tree a]
   deriving (Eq,Show)
 
-data ZipTree a = ZT a -- Change this!
+data ZipTree a = ZT (Tree a) [Path a]
   deriving (Eq,Show)
 
 instance TreeLike ZipTree where
-  single = undefined
-  getItem = undefined
-  moveToChild = undefined
-  moveUp = undefined
-  insertChild = undefined
-  remove = undefined
+  single x = ZT (Node x []) []
+  getItem (ZT (Node x ts) ls) = x
+  moveToChild n (ZT (Node x ts) ls) = ZT (ts !! n) ((Step x (take n ts) (drop (n+1) ts)) : ls)
+  moveUp (ZT t []) = error "Cannot move above root!" 
+  moveUp (ZT t ((Step x ll rr):ls)) = ZT (Node x (ll ++ [t] ++ rr)) ls
+  insertChild x (ZT (Node v ts) ls) = ZT (Node v (ts ++ [Node x []])) ls
+  remove (ZT t []) = error "Cannot move above root!" 
+  remove (ZT t ((Step x ll rr):ls)) = ZT (Node x (ll ++ rr)) ls
